@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YNAI inc</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div id="app">
+        <header class="main-header">
+            <div class="container">
+                <div class="logo">
+                    <a href="#">YNAI</a>
+                </div>
+                <nav class="main-nav">
+                    <ul>
+                        <li><a href="#hero">Home</a></li>
+                        <li><a href="#features">Offers</a></li>
+                        <li><a href="#apropos">About YNAI</a></li>
+                        <li><a href="#contact">Contact</a></li>
+                    </ul>
+                </nav>
+                <button class="menu-toggle" aria-label="Ouvrir le menu">
+                    <div class="bar"></div>
+                    <div class="bar"></div>
+                    <div class="bar"></div>
+                </button>
+            </div>
+        </header>
+
+        <section id="hero" class="hero-section">
+            <div class="container">
+                <h1>Your Next AI</h1>
+                <p>Beyond Intelligence</p>
+                <a href="#features" class="btn" id="hero-button">Open Advisor Tab</a>
+            </div>
+            <canvas id="particles-canvas-bg"></canvas>
+        </section>
+
+        <section id="features" class="features-section">
+            <div class="container">
+                <div class="feature-item">
+                    <h2 id="apropos">Innovation Constante</h2>
+                    <p>Nous repoussons les limites de l'IA pour créer des outils performants et intuitifs.</p>
+                </div>
+                <div class="feature-item">
+                    <h2>Simplicité d'Utilisation</h2>
+                    <p>Nos produits sont conçus pour être accessibles à tous, sans compromis sur la puissance.</p>
+                </div>
+                <div class="feature-item">
+                    <h2>Sécurité et Confiance</h2>
+                    <p>Vos données sont notre priorité. Des solutions robustes pour une tranquillité d'esprit.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="contact" class="cta-section">
+            <div class="container">
+                <h2>Prêt à Transformer Votre Business ?</h2>
+                <a href="#contact" class="btn btn-secondary">Contactez-nous</a>
+            </div>
+        </section>
+
+        <footer class="main-footer">
+            <div class="container">
+                <p>&copy; 2025 MonEntrepriseIA. Tous droits réservés.</p>
+                <div class="footer-links">
+                    <a href="#">Politique de confidentialité</a>
+                    <a href="#">Conditions d'utilisation</a>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script>
+        const { createApp, ref } = Vue
+
+        createApp({
+            setup() {
+                const message = ref('Bonjour Vue.js !');
+                const compteur = ref(0);
+
+                function inverserMessage() {
+                    message.value = message.value.split('').reverse().join('');
+                }
+
+                return {
+                    message,
+                    compteur,
+                    inverserMessage
+                }
+            }
+        }).mount('#app')
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const menuToggle = document.querySelector('.menu-toggle');
+            const mainNav = document.querySelector('.main-nav');
+
+            if (menuToggle && mainNav) {
+                menuToggle.addEventListener('click', function() {
+                    mainNav.classList.toggle('active');
+                    this.classList.toggle('active');
+                });
+            }
+
+            const heroSection = document.getElementById('hero');
+            const particlesCanvasBg = document.getElementById('particles-canvas-bg');
+            const ctxBg = particlesCanvasBg.getContext('2d');
+
+            const BG_PARTICLE_COUNT = 300;
+            const BG_PARTICLE_SIZE = 4;
+            const BG_PARTICLE_SPEED_MULTIPLIER = 0.5;
+            const REPEL_RADIUS = 70;
+            const REPEL_STRENGTH = 0.5;
+
+            const BG_NEON_COLOR_1 = '#9D00FF';
+            const BG_NEON_COLOR_2 = '#00FFFF';
+            const BG_NEON_GLOW_COLOR = '#FFFFFF';
+
+            let bgParticles = [];
+            let bgAnimationFrameId;
+            let currentBgCanvasWidth = 0;
+            let currentBgCanvasHeight = 0;
+
+            let mouse = {
+                x: null,
+                y: null,
+                radius: REPEL_RADIUS
+            };
+
+            heroSection.addEventListener('mousemove', function(e) {
+                const rect = heroSection.getBoundingClientRect();
+                mouse.x = e.clientX - rect.left;
+                mouse.y = e.clientY - rect.top;
+            });
+
+            heroSection.addEventListener('mouseleave', function() {
+                mouse.x = null;
+                mouse.y = null;
+            });
+
+            class BgParticle {
+                constructor(x, y, vx, vy, size, color, glowColor, opacity) {
+                    this.x = x;
+                    this.y = y;
+                    this.vx = vx;
+                    this.vy = vy;
+                    this.baseVx = vx;
+                    this.baseVy = vy;
+                    
+                    this.originalSize = size;
+                    this.originalOpacity = opacity;
+                    this.size = size;
+                    this.opacity = opacity;
+                    this.targetSize = size;
+                    this.targetOpacity = opacity;
+
+                    this.color = color;
+                    this.glowColor = glowColor;
+                }
+
+                draw() {
+                    ctxBg.save();
+                    ctxBg.globalAlpha = this.opacity;
+                    ctxBg.shadowBlur = 10;
+                    ctxBg.shadowColor = this.glowColor;
+                    ctxBg.fillStyle = this.color;
+                    ctxBg.beginPath();
+                    ctxBg.arc(this.x, this.y, this.size / 2, 0, Math.PI * 2);
+                    ctxBg.fill();
+                    ctxBg.restore();
+                }
+
+                update() {
+                    const animSpeed = 0.1;
+                    this.opacity += (this.targetOpacity - this.opacity) * animSpeed;
+                    this.size += (this.targetSize - this.size) * animSpeed;
+
+                    const dx = mouse.x - this.x;
+                    const dy = mouse.y - this.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < mouse.radius && mouse.x !== null) {
+                        const angle = Math.atan2(dy, dx);
+                        const force = (mouse.radius - distance) / mouse.radius;
+                        const repulsionX = Math.cos(angle) * force * REPEL_STRENGTH;
+                        const repulsionY = Math.sin(angle) * force * REPEL_STRENGTH;
+
+                        this.vx -= repulsionX;
+                        this.vy -= repulsionY;
+
+                        const maxSpeed = 5;
+                        if (Math.abs(this.vx) > maxSpeed) this.vx = Math.sign(this.vx) * maxSpeed;
+                        if (Math.abs(this.vy) > maxSpeed) this.vy = Math.sign(this.vy) * maxSpeed;
+
+                    } else {
+                        const returnStrength = 0.03;
+                        this.vx += (this.baseVx - this.vx) * returnStrength;
+                        this.vy += (this.baseVy - this.vy) * returnStrength;
+                    }
+
+                    this.x += this.vx;
+                    this.y += this.vy;
+                    
+                    if (this.x > currentBgCanvasWidth + this.size) {
+                        this.x = -this.size;
+                    } else if (this.x < -this.size) {
+                        this.x = currentBgCanvasWidth + this.size;
+                    }
+
+                    if (this.y > currentBgCanvasHeight + this.size) {
+                        this.y = -this.size;
+                    } else if (this.y < -this.size) {
+                        this.y = currentBgCanvasHeight + this.size;
+                    }
+                }
+            }
+
+            function setupBgCanvasAndParticles() {
+                const rect = heroSection.getBoundingClientRect();
+                const newWidth = rect.width;
+                const newHeight = rect.height;
+
+                if (newWidth === 0 || newHeight === 0 || isNaN(newWidth) || isNaN(newHeight)) {
+                    setTimeout(setupBgCanvasAndParticles, 250);
+                    return;
+                }
+
+                if (newWidth === currentBgCanvasWidth && newHeight === currentBgCanvasHeight && bgParticles.length === BG_PARTICLE_COUNT) {
+                    return;
+                }
+
+                currentBgCanvasWidth = newWidth;
+                currentBgCanvasHeight = newHeight;
+
+                particlesCanvasBg.width = currentBgCanvasWidth * window.devicePixelRatio;
+                particlesCanvasBg.height = currentBgCanvasHeight * window.devicePixelRatio;
+                ctxBg.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+                bgParticles = [];
+                for (let i = 0; i < BG_PARTICLE_COUNT; i++) {
+                    const x = Math.random() * currentBgCanvasWidth;
+                    const y = Math.random() * currentBgCanvasHeight;
+                    const vx = (Math.random() - 0.5) * BG_PARTICLE_SPEED_MULTIPLIER;
+                    const vy = (Math.random() - 0.5) * BG_PARTICLE_SPEED_MULTIPLIER;
+                    const size = BG_PARTICLE_SIZE * (Math.random() * 0.5 + 0.75);
+                    const color = i % 2 === 0 ? BG_NEON_COLOR_1 : BG_NEON_COLOR_2;
+                    const opacity = Math.random() * 0.4 + 0.2;
+                    bgParticles.push(new BgParticle(x, y, vx, vy, size, color, BG_NEON_GLOW_COLOR, opacity));
+                }
+
+                if (!bgAnimationFrameId) {
+                    animateBgParticles();
+                }
+            }
+
+            function animateBgParticles() {
+                ctxBg.clearRect(0, 0, particlesCanvasBg.width, particlesCanvasBg.height);
+                bgParticles.forEach(p => {
+                    p.update();
+                    p.draw();
+                });
+                bgAnimationFrameId = requestAnimationFrame(animateBgParticles);
+            }
+
+            window.addEventListener('load', () => {
+                setupBgCanvasAndParticles();
+            });
+
+            let resizeTimeoutCommon;
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimeoutCommon);
+                resizeTimeoutCommon = setTimeout(() => {
+                    cancelAnimationFrame(bgAnimationFrameId);
+                    bgAnimationFrameId = null;
+                    setupBgCanvasAndParticles();
+                }, 250);
+            });
+
+
+            const allBtns = document.querySelectorAll('.btn');
+            allBtns.forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    this.classList.add('ripple-active');
+                    this.addEventListener('animationend', () => {
+                        this.classList.remove('ripple-active');
+                    }, { once: true });
+
+                    const ripple = document.createElement('span');
+                    ripple.classList.add('ripple');
+                    const rect = this.getBoundingClientRect();
+                    const size = Math.max(rect.width, rect.height);
+                    const x = e.clientX - rect.left - (size / 2);
+                    const y = e.clientY - rect.top - (size / 2);
+
+                    ripple.style.width = ripple.style.height = `${size}px`;
+                    ripple.style.left = `${x}px`;
+                    ripple.style.top = `${y}px`;
+                    this.appendChild(ripple);
+                    ripple.addEventListener('animationend', () => {
+                        ripple.remove();
+                    });
+                    e.preventDefault();
+                });
+            });
+            
+            const heroButton = document.getElementById('hero-button');
+
+            if (heroButton) {
+                heroButton.addEventListener('mouseenter', () => {
+                    bgParticles.forEach(p => {
+                        p.targetOpacity = 0.9;
+                        p.targetSize = p.originalSize * 1.5;
+                    });
+                });
+
+                heroButton.addEventListener('mouseleave', () => {
+                    bgParticles.forEach(p => {
+                        p.targetOpacity = p.originalOpacity;
+                        p.targetSize = p.originalSize;
+                    });
+                });
+            }
+
+        });
+    </script>
+</body>
+</html>
